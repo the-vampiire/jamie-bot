@@ -1,26 +1,11 @@
-require('dotenv').config();
-// thanks to "reddit-oauth-helper": "^0.3.0"
-const snoo = require('snoowrap');
-const YouTube = require('./youtube');
-
 const goof_re = /that (aint|ain't) it chief/mi;
 const request_re = /((young )?(jamie (pull up|find|get|search) ))(\w|, | )+(?=\.)?/mi;
 const keyword_re = /(?<=(pull up|find|get|search) )[\w, ]+(?=(\.| )?)/i;
 
 class YoungJamie {
-  constructor() {
-    const clientId = process.env.CLIENT_ID;
-    const clientSecret = process.env.CLIENT_SECRET;
-    const refreshToken = process.env.REFRESH_TOKEN
-    const config = {
-      userAgent: `http:${clientId}:0.0.1 (by /u/vampiire)`,
-      clientId,
-      clientSecret,
-      refreshToken
-    };
-
-    this.reddit = new snoo(config);
-    this.youtube = YouTube(process.env.YOUTUBE_TOKEN);
+  constructor(reddit, youtube) {
+    this.reddit = reddit;
+    this.youtube = youtube;
     this.comments = [];
     this.results = [];
     this.goofs = [];
@@ -28,8 +13,7 @@ class YoungJamie {
 
   async listen() {
     const comments = await this.reddit.getNewComments('mma');
-    const filtered_comments = comments.reduce(this.filterComments);
-    this.comments = Array.from(new Set(this.comments, filtered_comments));
+    this.comments = this.filterComments(comments);
   }
 
   extractKeywords(body) {
