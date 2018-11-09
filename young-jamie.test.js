@@ -1,29 +1,44 @@
 const { YoungJamie, goof_re, request_re, keyword_re } = require('./young-jamie');
 
+const comments = [
+  {
+    parent_id: 1,
+    body: 'that aint it chief',
+    score: 10,
+  },
+  {
+    body: 'jamie pull up hairless chimps',
+    is_hidden: true,
+  },
+  {
+    body: 'jamie pull up hairless chimps',
+    score: 1,
+  },
+];
+
+const good_comment = {
+  score: 10,
+  body: 'young jamie pull up hairless chimps.',
+};
+
+const reddit_mock_good = {
+  getNewComments: () => {
+    return [...comments, good_comment, good_comment];
+  }
+}
+
+const reddit_mock_bad = {
+  getNewComments: () => {
+    return comments;
+  }
+}
+
+const youtube_mock = {};
+
 describe('Young Jamie', () => {
-  const jamie = new YoungJamie();
+  const jamie = new YoungJamie(reddit_mock_good, youtube_mock);
 
   describe('filterComments()', () => {
-    const comments = [
-      {
-        parent_id: 1,
-        body: 'that aint it chief'
-      },
-      {
-        body: 'jamie pull up hairless chimps',
-        is_hidden: true,
-      },
-      {
-        body: 'jamie pull up hairless chimps',
-        score: 1,
-      },
-    ];
-
-    const good_comment = {
-      score: 10,
-      body: 'young jamie pull up hairless chimps.',
-    };
-
     describe('catching goofs in comment replies', () => {
       const  goof_comment = comments[0];
       test("goof_regex: that aint it chief", () => {
@@ -132,9 +147,19 @@ describe('Young Jamie', () => {
     });
   });
 
-  test('listen(): populates with new comments', async (done) => {
-    await jamie.listen;
-    expect(jamie.comments.length).toBeGreaterThan(0);
-    done();
+  describe('listen()', () => {
+    test('this.comments: 2 when given 2 valid comments', async (done) => {
+      await jamie.listen();
+      expect(jamie.comments.length).toBe(2);
+      done();
+    });
+
+    test('this.comments: 0, this.goofs: 1 given a mix', async (done) => {
+      const other_jamie = new YoungJamie(reddit_mock_bad, youtube_mock);
+      await other_jamie.listen();
+      expect(other_jamie.comments.length).toBe(0);
+      expect(other_jamie.goofs.length).toBe(1);
+      done();
+    });
   });
 });
